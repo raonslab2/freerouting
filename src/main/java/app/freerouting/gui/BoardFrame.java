@@ -64,6 +64,7 @@ public class BoardFrame extends WindowBase
    * The toolbar used in the selected item state.
    */
   private final JToolBar select_toolbar;
+  private final RoutingDashboardPanel routing_dashboard_panel;
   /**
    * The panel with the message line
    */
@@ -274,8 +275,12 @@ public class BoardFrame extends WindowBase
     this.add(this.toolbar_panel, BorderLayout.NORTH);
 
     // Create and move the status bar one-liners (like current layer, cursor position, etc.) below the canvas.
+    this.routing_dashboard_panel = new RoutingDashboardPanel(this.locale);
     this.message_panel = new BoardPanelStatus(this.locale);
-    this.add(this.message_panel, BorderLayout.SOUTH);
+    JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.add(this.routing_dashboard_panel, BorderLayout.NORTH);
+    bottomPanel.add(this.message_panel, BorderLayout.SOUTH);
+    this.add(bottomPanel, BorderLayout.SOUTH);
 
     this.message_panel.addErrorOrWarningLabelClickedListener(() ->
     {
@@ -344,6 +349,11 @@ public class BoardFrame extends WindowBase
 
     this.updateTexts();
     this.pack();
+  }
+
+  public RoutingDashboardPanel getRoutingDashboardPanel()
+  {
+    return this.routing_dashboard_panel;
   }
 
   @Override

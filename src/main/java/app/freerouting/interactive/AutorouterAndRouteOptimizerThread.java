@@ -11,6 +11,7 @@ import app.freerouting.designforms.specctra.SpecctraSesFileWriter;
 import app.freerouting.geometry.planar.FloatLine;
 import app.freerouting.geometry.planar.FloatPoint;
 import app.freerouting.gui.FileFormat;
+import app.freerouting.gui.RoutingDashboardPanel;
 import app.freerouting.logger.FRLogger;
 import app.freerouting.management.TextManager;
 import app.freerouting.management.analytics.FRAnalytics;
@@ -30,6 +31,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
 {
   private final BatchAutorouter batchAutorouter;
   private BatchOptimizer batchOptimizer;
+  private final RoutingDashboardPanel routingDashboard;
 
   /**
    * Creates a new instance of AutorouterAndRouteOptimizerThread
@@ -42,6 +44,8 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
     routingJob.board = p_board_handling.get_routing_board();
 
     this.batchAutorouter = new BatchAutorouter(routingJob);
+    this.routingDashboard = boardManager.get_panel().board_frame.getRoutingDashboardPanel();
+    this.routingDashboard.reset();
 
     if (!Objects.equals(routingJob.routerSettings.algorithm, this.batchAutorouter.getId()))
     {
@@ -62,6 +66,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
         boardManager.screen_messages.set_batch_autoroute_info(event.getRouterCounters());
         boardManager.screen_messages.set_board_score(boardScore, event.getBoardStatistics().connections.incompleteCount, event.getBoardStatistics().clearanceViolations.totalCount);
         boardManager.repaint();
+        routingDashboard.updateFromCounters("Autorouting", event.getRouterCounters(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
       }
     });
 
@@ -98,6 +103,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
           TextManager tm = new TextManager(InteractiveState.class, boardManager.get_locale());
           String start_message = tm.getText("autorouter_started", Integer.toString(event.getPassNumber()));
           boardManager.screen_messages.set_status_message(start_message);
+          routingDashboard.markPass("Autorouting pass " + event.getPassNumber(), event.getPassNumber(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
         }
       }
     });
@@ -136,6 +142,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
             boardManager.screen_messages.set_post_route_info(boardStatistics.items.viaCount, boardStatistics.traces.totalLength, boardManager.coordinate_transform.user_unit);
             boardManager.screen_messages.set_board_score(boardStatistics.getNormalizedScore(routingJob.routerSettings.scoring), boardStatistics.connections.incompleteCount, boardStatistics.clearanceViolations.totalCount);
             boardManager.repaint();
+            routingDashboard.updateFromCounters("Optimizer", event.getRouterCounters(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
           }
         });
 
@@ -150,6 +157,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
               TextManager tm = new TextManager(InteractiveState.class, boardManager.get_locale());
               String start_message = tm.getText("optimizer_started", Integer.toString(event.getPassNumber()));
               boardManager.screen_messages.set_status_message(start_message);
+              routingDashboard.markPass("Optimizer pass " + event.getPassNumber(), event.getPassNumber(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
             }
           }
         });
@@ -174,6 +182,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
             BoardStatistics boardStatistics = event.getBoardStatistics();
             boardManager.replaceRoutingBoard(event.getBoard());
             boardManager.screen_messages.set_post_route_info(boardStatistics.items.viaCount, boardStatistics.traces.totalLength, boardManager.coordinate_transform.user_unit);
+            routingDashboard.updateFromCounters("Optimizer", event.getRouterCounters(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
           }
         });
 
@@ -188,6 +197,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
               TextManager tm = new TextManager(InteractiveState.class, boardManager.get_locale());
               String start_message = tm.getText("optimizer_started", Integer.toString(event.getPassNumber()));
               boardManager.screen_messages.set_status_message(start_message);
+              routingDashboard.markPass("Optimizer pass " + event.getPassNumber(), event.getPassNumber(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
             }
           }
         });
@@ -212,6 +222,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
     try
     {
       TextManager tm = new TextManager(InteractiveState.class, boardManager.get_locale());
+      routingDashboard.startRun("Autorouting", routingJob.routerSettings.maxPasses);
 
       boolean saved_board_read_only = boardManager.is_board_read_only();
       boardManager.set_board_read_only(true);
@@ -246,6 +257,7 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
           public void onTaskStateChangedEvent(TaskStateChangedEvent event)
           {
             boardManager.screen_messages.set_batch_fanout_info(event.getPassNumber(), 0);
+            routingDashboard.markPass("Fanout", event.getPassNumber(), routingJob.routerSettings.get_start_pass_no(), routingJob.routerSettings.maxPasses);
           }
         });
         fanout.addBoardUpdatedEventListener(new BoardUpdatedEventListener()
@@ -393,6 +405,8 @@ public class AutorouterAndRouteOptimizerThread extends InteractiveActionThread
       routingJob.state = RoutingJobState.COMPLETED;
       globalSettings.statistics.incrementJobsCompleted();
     }
+    String summary = this.isStopRequested() ? "Routing stopped" : "Routing completed";
+    routingDashboard.finish(this.isStopRequested(), summary);
 
     for (ThreadActionListener hl : this.listeners)
     {
