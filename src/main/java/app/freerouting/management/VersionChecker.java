@@ -26,8 +26,9 @@ public class VersionChecker implements Runnable
   @Override
   public void run()
   {
-    try (HttpClient client = HttpClient.newHttpClient())
+    try
     {
+      HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder().uri(URI.create(GITHUB_RELEASES_URL)).build();
 
       client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept(this::processResponse).exceptionally(e ->

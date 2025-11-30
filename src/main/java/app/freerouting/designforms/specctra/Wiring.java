@@ -698,6 +698,11 @@ class Wiring extends ScopeKeyword
         }
       }
       RoutingBoard board = p_par.board_handling.get_routing_board();
+      if (board == null || board.library == null || board.library.padstacks == null)
+      {
+        FRLogger.warn("Wiring.read_via_scope: board or library is null");
+        return false;
+      }
       Padstack curr_padstack = board.library.padstacks.get(padstack_name);
       if (curr_padstack == null)
       {

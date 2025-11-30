@@ -167,7 +167,7 @@ public class RoutingJobSchedulerActionThread extends StoppableThread
     // Iterate through the thread IDs and get memory usage
     for (long threadId : threadIds)
     {
-      if (threadId == job.thread.threadId())
+      if (threadId == job.thread.getId())
       {
         // CPU time and memory usage
         float cpuTime = threadMXBean.getThreadCpuTime(threadId) / 1000.0f / 1000.0f / 1000.0f;
