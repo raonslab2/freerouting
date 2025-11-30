@@ -58,6 +58,10 @@ public class RoutingDashboardPanel extends JPanel
     add(bars, BorderLayout.CENTER);
     add(statsLabel, BorderLayout.SOUTH);
 
+    // Ensure the panel has a minimum preferred size so it's visible
+    setPreferredSize(new Dimension(400, 80));
+    setMinimumSize(new Dimension(200, 80));
+
     reset();
   }
 
