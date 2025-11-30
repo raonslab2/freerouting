@@ -153,6 +153,9 @@ public class Freerouting
       }
     }
 
+    // Apply persisted routing mode presets before per-run overrides.
+    globalSettings.routerSettings.applyRoutingModeDefaults();
+
     // apply environment variables to the settings
     globalSettings.applyEnvironmentVariables();
 
@@ -230,9 +233,14 @@ public class Freerouting
     int userIdValue = Integer.parseInt(userIdString, 16);
 
     // if the user has disabled analytics, we don't need to check the modulo
-    allowAnalytics = !globalSettings.usageAndDiagnosticData.disableAnalytics && (userIdValue % analyticsModulo == 0) && (globalSettings.userProfileSettings.isTelemetryAllowed);
+    boolean runtimeAnalyticsOptIn = globalSettings.usageAndDiagnosticData.runtimeOptIn;
+    allowAnalytics = runtimeAnalyticsOptIn && !globalSettings.usageAndDiagnosticData.disableAnalytics && (userIdValue % analyticsModulo == 0) && (globalSettings.userProfileSettings.isTelemetryAllowed);
 
-    if (!allowAnalytics)
+    if (!runtimeAnalyticsOptIn)
+    {
+      FRLogger.debug("Analytics are disabled (explicit opt-in required via --enable-analytics or FREEROUTING__ENABLE_ANALYTICS=1).");
+    }
+    else if (!allowAnalytics)
     {
       FRLogger.debug("Analytics are disabled");
     }

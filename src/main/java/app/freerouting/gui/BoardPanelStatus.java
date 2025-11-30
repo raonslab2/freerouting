@@ -26,6 +26,9 @@ class BoardPanelStatus extends JPanel
   public final JLabel currentBoardScore;
   public final JLabel mousePosition;
   public final JLabel unitLabel;
+  public final JLabel modeLabel;
+  public final JLabel selectionLabel;
+  public final JLabel drcLabel;
   // An icon for errors and warnings
   private final JPanel errorsWarningsPanel;
   private final JLabel errorIcon;
@@ -42,93 +45,76 @@ class BoardPanelStatus extends JPanel
   {
     TextManager tm = new TextManager(this.getClass(), locale);
 
-    setLayout(new BorderLayout());
+    setLayout(new BorderLayout(6, 0));
 
-    // Left panel with warnings, errors, and status messages
-    errorsWarningsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    // Left cluster: mode + errors/warnings + status
+    errorsWarningsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
 
-    // Load the Material Icons for warnings and errors
+    modeLabel = new JLabel("Mode: Select");
+    modeLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+    errorsWarningsPanel.add(modeLabel);
+
     warningIcon = new JLabel();
     tm.setText(warningIcon, "{{icon:alert}}");
     errorIcon = new JLabel();
     tm.setText(errorIcon, "{{icon:close-octagon}}");
-
-    // Initialize labels with icons
     warningLabel = new JLabel("0", SwingConstants.LEADING);
     errorLabel = new JLabel("0", SwingConstants.LEADING);
+    warningLabel.setBorder(new EmptyBorder(0, 0, 0, 6));
+    errorLabel.setBorder(new EmptyBorder(0, 0, 0, 6));
+    errorsWarningsPanel.add(errorIcon);
+    errorsWarningsPanel.add(errorLabel);
+    errorsWarningsPanel.add(warningIcon);
+    errorsWarningsPanel.add(warningLabel);
 
-    // Add error and warning labels
-    errorsWarningsPanel.add(errorIcon, BorderLayout.WEST);
-    errorsWarningsPanel.add(errorLabel, BorderLayout.WEST);
-    errorsWarningsPanel.add(warningIcon, BorderLayout.WEST);
-    errorsWarningsPanel.add(warningLabel, BorderLayout.WEST);
-
-    // Add mouse listeners for error and warning labels
-    addErrorOrWarningLabelClickedListener();
-
-    // Add margin to the right of the labels
-    int top = 0;
-    int left = 0;
-    int bottom = 0;
-    int right = 10;
-    warningLabel.setBorder(new EmptyBorder(top, left, bottom, right));
-    errorLabel.setBorder(new EmptyBorder(top, left, bottom, right));
-
-    // Initialize status message label
     statusMessage = new JLabel();
-    statusMessage.setHorizontalAlignment(SwingConstants.CENTER);
+    statusMessage.setHorizontalAlignment(SwingConstants.LEFT);
     tm.setText(statusMessage, "status_line");
-    errorsWarningsPanel.add(statusMessage, BorderLayout.CENTER);
+    errorsWarningsPanel.add(statusMessage);
 
-    // Initialize additional message label
     additionalMessage = new JLabel();
     tm.setText(additionalMessage, "additional_text_field");
     additionalMessage.setMaximumSize(new Dimension(300, 14));
     additionalMessage.setMinimumSize(new Dimension(140, 14));
     additionalMessage.setPreferredSize(new Dimension(180, 14));
-    errorsWarningsPanel.add(additionalMessage, BorderLayout.EAST);
-    add(errorsWarningsPanel, BorderLayout.CENTER);
+    errorsWarningsPanel.add(additionalMessage);
 
-    // Right panel with current layer and cursor position
-    JPanel rightMessagePanel = new JPanel(new BorderLayout());
-    rightMessagePanel.setMinimumSize(new Dimension(200, 20));
-    rightMessagePanel.setOpaque(false);
-    rightMessagePanel.setPreferredSize(new Dimension(450, 20));
+    add(errorsWarningsPanel, BorderLayout.WEST);
 
-    // Initialize current layer label
+    // Center cluster: selection + DRC + score/unrouted
+    JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    selectionLabel = new JLabel("Selection: None");
+    drcLabel = new JLabel("DRC: 0");
+    currentBoardScore = new JLabel("Score: -");
+    centerPanel.add(selectionLabel);
+    centerPanel.add(drcLabel);
+    centerPanel.add(currentBoardScore);
+    add(centerPanel, BorderLayout.CENTER);
+
+    // Right cluster: layer + coords + unit
+    JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
     currentLayer = new JLabel();
     tm.setText(currentLayer, "current_layer");
-    rightMessagePanel.add(currentLayer, BorderLayout.CENTER);
+    rightPanel.add(currentLayer);
 
-    // Initialize current board score label
-    currentBoardScore = new JLabel();
-    tm.setText(currentBoardScore, "current_board_score");
-    rightMessagePanel.add(currentBoardScore, BorderLayout.CENTER);
-
-    // Create cursor panel
-    JPanel cursorPanel = new JPanel(new BorderLayout());
-    cursorPanel.setMinimumSize(new Dimension(220, 14));
-    cursorPanel.setPreferredSize(new Dimension(220, 14));
-
-    // Initialize mouse position label
     mousePosition = new JLabel();
     mousePosition.setText("X 0.00   Y 0.00");
     mousePosition.setMaximumSize(new Dimension(170, 14));
     mousePosition.setPreferredSize(new Dimension(170, 14));
-    cursorPanel.add(mousePosition, BorderLayout.WEST);
+    rightPanel.add(mousePosition);
 
-    // Initialize cursor label
     unitLabel = new JLabel();
     unitLabel.setHorizontalAlignment(SwingConstants.CENTER);
     unitLabel.setText("unit");
     unitLabel.setMaximumSize(new Dimension(100, 14));
     unitLabel.setMinimumSize(new Dimension(50, 14));
     unitLabel.setPreferredSize(new Dimension(50, 14));
-    cursorPanel.add(unitLabel, BorderLayout.EAST);
+    rightPanel.add(unitLabel);
 
-    rightMessagePanel.add(cursorPanel, BorderLayout.EAST);
+    add(rightPanel, BorderLayout.EAST);
 
-    add(rightMessagePanel, BorderLayout.EAST);
+    // Register click handlers after labels are constructed.
+    addErrorOrWarningLabelClickedListener();
   }
 
   /**
@@ -137,17 +123,24 @@ class BoardPanelStatus extends JPanel
   private void addErrorOrWarningLabelClickedListener()
   {
     // Raise an event if the user clicks on the error or warning label
-    errorsWarningsPanel.addMouseListener(new MouseAdapter()
+    MouseAdapter clickHandler = new MouseAdapter()
     {
       @Override
       public void mouseClicked(MouseEvent e)
       {
         raiseErrorOrWarningLabelClickedEvent();
       }
-    });
+    };
+    errorsWarningsPanel.addMouseListener(clickHandler);
+    errorLabel.addMouseListener(clickHandler);
+    warningLabel.addMouseListener(clickHandler);
+    drcLabel.addMouseListener(clickHandler);
 
     // Change the mouse cursor to a hand when hovering over these labels
     errorsWarningsPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    errorLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    warningLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    drcLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
   }
 
   /**

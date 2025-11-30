@@ -5,6 +5,7 @@ import app.freerouting.board.LayerStructure;
 import app.freerouting.interactive.GuiBoardManager;
 import app.freerouting.management.analytics.FRAnalytics;
 import app.freerouting.settings.RouterSettings;
+import app.freerouting.settings.RoutingMode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,11 @@ public class WindowAutorouteParameter extends BoardSavableSubWindow
   private final JComboBox<String> settings_autorouter_detailed_speed_combo_box;
   private final String speed_fast;
   private final String speed_slow;
+  private final JComboBox<String> routing_mode_combo_box;
+  private final JLabel routing_mode_summary_label;
+  private final String mode_fast;
+  private final String mode_balanced;
+  private final String mode_quality;
   private final JFormattedTextField[] preferred_direction_trace_cost_arr;
   private final JFormattedTextField[] against_preferred_direction_trace_cost_arr;
   private final boolean[] preferred_direction_trace_costs_input_completed;
@@ -274,6 +280,32 @@ public class WindowAutorouteParameter extends BoardSavableSubWindow
     gridbag.setConstraints(settings_autorouter_detailed_speed_combo_box, gridbag_constraints);
     main_panel.add(settings_autorouter_detailed_speed_combo_box);
 
+    // Routing mode presets (fast/balanced/quality)
+    gridbag_constraints.gridwidth = 2;
+    JLabel routing_mode_label = new JLabel(tm.getText("routing_mode"));
+    routing_mode_label.setToolTipText(tm.getText("routing_mode_tooltip"));
+    gridbag.setConstraints(routing_mode_label, gridbag_constraints);
+    main_panel.add(routing_mode_label);
+
+    this.mode_fast = tm.getText("routing_mode_fast");
+    this.mode_balanced = tm.getText("routing_mode_balanced");
+    this.mode_quality = tm.getText("routing_mode_quality");
+    routing_mode_combo_box = new JComboBox<>();
+    routing_mode_combo_box.addItem(this.mode_fast);
+    routing_mode_combo_box.addItem(this.mode_balanced);
+    routing_mode_combo_box.addItem(this.mode_quality);
+    routing_mode_combo_box.setToolTipText(tm.getText("routing_mode_tooltip"));
+    routing_mode_combo_box.addActionListener(new RoutingModeListener());
+    gridbag_constraints.gridwidth = GridBagConstraints.REMAINDER;
+    gridbag.setConstraints(routing_mode_combo_box, gridbag_constraints);
+    main_panel.add(routing_mode_combo_box);
+
+    routing_mode_summary_label = new JLabel();
+    routing_mode_summary_label.setToolTipText(tm.getText("routing_mode_tooltip"));
+    gridbag_constraints.gridwidth = GridBagConstraints.REMAINDER;
+    gridbag.setConstraints(routing_mode_summary_label, gridbag_constraints);
+    main_panel.add(routing_mode_summary_label);
+
     JLabel separator2 = new JLabel("––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––  ");
     gridbag.setConstraints(separator2, gridbag_constraints);
     main_panel.add(separator2, gridbag_constraints);
@@ -377,6 +409,19 @@ public class WindowAutorouteParameter extends BoardSavableSubWindow
     this.plane_via_cost_field.setValue(settings.get_plane_via_costs());
     this.start_ripup_costs.setValue(settings.get_start_ripup_costs());
     this.start_pass_no.setValue(settings.get_start_pass_no());
+    routing_mode_summary_label.setText(formatRoutingModeSummary(settings));
+    if (settings.routingMode == RoutingMode.FAST)
+    {
+      routing_mode_combo_box.setSelectedItem(this.mode_fast);
+    }
+    else if (settings.routingMode == RoutingMode.QUALITY)
+    {
+      routing_mode_combo_box.setSelectedItem(this.mode_quality);
+    }
+    else
+    {
+      routing_mode_combo_box.setSelectedItem(this.mode_balanced);
+    }
     for (int i = 0; i < preferred_direction_trace_cost_arr.length; ++i)
     {
       this.preferred_direction_trace_cost_arr[i].setValue(settings.get_preferred_direction_trace_costs(layer_structure.get_layer_no(i)));
@@ -414,6 +459,37 @@ public class WindowAutorouteParameter extends BoardSavableSubWindow
   public void set_stop_pass_no(int input_value)
   {
     board_handling.settings.autoroute_settings.set_stop_pass_no(input_value);
+  }
+
+  private String formatRoutingModeSummary(RouterSettings settings)
+  {
+    String optimizerText = settings.getRunOptimizer() ? tm.getText("routing_mode_optimizer_on") : tm.getText("routing_mode_optimizer_off");
+    float thresholdPercent = settings.optimizer.optimizationImprovementThreshold * 100;
+    return tm.getText("routing_mode_summary") + " " + settings.maxPasses + " / " + optimizerText + " / " + String.format("%.2f%%", thresholdPercent);
+  }
+
+  private class RoutingModeListener implements ActionListener
+  {
+    @Override
+    public void actionPerformed(ActionEvent p_evt)
+    {
+      Object selected = routing_mode_combo_box.getSelectedItem();
+      RoutingMode newMode;
+      if (mode_fast.equals(selected))
+      {
+        newMode = RoutingMode.FAST;
+      }
+      else if (mode_quality.equals(selected))
+      {
+        newMode = RoutingMode.QUALITY;
+      }
+      else
+      {
+        newMode = RoutingMode.BALANCED;
+      }
+      board_handling.settings.autoroute_settings.setRoutingMode(newMode);
+      refresh();
+    }
   }
 
   private class LayerActiveListener implements ActionListener

@@ -403,108 +403,126 @@ public class WindowWelcome extends WindowBase
     TextManager tm = new TextManager(WindowWelcome.class, globalSettings.currentLocale);
 
     InputStream input_stream = null;
-    if ((routingJob == null) || (routingJob.input.getFile() == null))
+    try
     {
-      routingJob = new RoutingJob(SessionManager
-          .getInstance()
-          .getGuiSession().id);
-      routingJob.setDummyInputFile("tutorial_board.dsn");
-      // Load an empty template file from the resources
-      ClassLoader classLoader = WindowBase.class.getClassLoader();
-      input_stream = classLoader.getResourceAsStream("tutorial_board.dsn");
-    }
-    else
-    {
-      input_stream = routingJob.input.getData();
-      if (input_stream == null)
+      if ((routingJob == null) || (routingJob.input.getFile() == null))
       {
-        if (p_message_field != null)
-        {
-          p_message_field.setText(tm.getText("message_8") + " " + routingJob.input.getFilename());
-        }
-        return null;
-      }
-    }
-
-    BoardFrame new_frame = new BoardFrame(routingJob, globalSettings);
-
-    boolean read_ok = new_frame.load(input_stream, routingJob.input.format.equals(FileFormat.DSN), p_message_field, routingJob);
-    if (!read_ok)
-    {
-      return null;
-    }
-
-    // Change the palette if we loaded the tutorial DSN file
-    if (Objects.equals(routingJob.input.getFilename(), "tutorial_board.dsn"))
-    {
-      var graphicsContext = new_frame.board_panel.board_handling.graphics_context;
-
-      graphicsContext.color_intensity_table.set_value(ColorIntensityTable.ObjectNames.CONDUCTION_AREAS.ordinal(), 0.9);
-      graphicsContext.item_color_table.set_conduction_colors(new Color[]{
-          new Color(232, 204, 135),
-          new Color(255, 255, 255)
-      });
-      graphicsContext.other_color_table.set_background_color(new Color(1, 58, 32));
-      graphicsContext.other_color_table.set_outline_color(new Color(255, 255, 255));
-
-      new_frame.board_panel.setBackground(graphicsContext.other_color_table.get_background_color());
-    }
-
-    FRAnalytics.buttonClicked("fileio_loaddsn", routingJob.getInputFileDetails());
-
-    if (!globalSettings.featureFlags.selectMode)
-    {
-      new_frame.board_panel.board_handling.set_route_menu_state();
-    }
-
-    if (routingJob.input.format.equals(FileFormat.DSN))
-    {
-      // Read the file with the saved rules, if it exists.
-      String design_name = routingJob.name;
-
-      String rules_file_name;
-      String parent_folder_name;
-      String confirm_import_rules_message;
-      if (globalSettings.design_rules_filename == null)
-      {
-        rules_file_name = design_name + ".rules";
-        parent_folder_name = routingJob.input.getDirectoryPath();
-        confirm_import_rules_message = tm.getText("confirm_import_rules");
+        routingJob = new RoutingJob(SessionManager
+            .getInstance()
+            .getGuiSession().id);
+        routingJob.setDummyInputFile("tutorial_board.dsn");
+        // Load an empty template file from the resources
+        ClassLoader classLoader = WindowBase.class.getClassLoader();
+        input_stream = classLoader.getResourceAsStream("tutorial_board.dsn");
       }
       else
       {
-        rules_file_name = globalSettings.design_rules_filename;
-        parent_folder_name = null;
-        confirm_import_rules_message = null;
-      }
-
-      File rules_file = new File(parent_folder_name, rules_file_name);
-      if (rules_file.exists())
-      {
-        // load the .rules file
-        RoutingJob.read_rules_file(design_name, parent_folder_name, rules_file_name, new_frame.board_panel.board_handling, confirm_import_rules_message);
-      }
-
-      // ignore net classes if they were defined by a command line argument
-      for (String net_class_name : globalSettings.routerSettings.ignoreNetClasses)
-      {
-        NetClasses netClasses = new_frame.board_panel.board_handling.get_routing_board().rules.net_classes;
-
-        for (int i = 0; i < netClasses.count(); i++)
+        input_stream = routingJob.input.getData();
+        if (input_stream == null)
         {
-          if (netClasses
-              .get(i)
-              .get_name()
-              .equalsIgnoreCase(net_class_name))
+          if (p_message_field != null)
           {
-            netClasses.get(i).is_ignored_by_autorouter = true;
+            p_message_field.setText(tm.getText("message_8") + " " + routingJob.input.getFilename());
           }
+          return null;
         }
       }
 
-      new_frame.refresh_windows();
+      BoardFrame new_frame = new BoardFrame(routingJob, globalSettings);
+
+      boolean read_ok = new_frame.load(input_stream, routingJob.input.format.equals(FileFormat.DSN), p_message_field, routingJob);
+      if (!read_ok)
+      {
+        return null;
+      }
+
+      // Change the palette if we loaded the tutorial DSN file
+      if (Objects.equals(routingJob.input.getFilename(), "tutorial_board.dsn"))
+      {
+        var graphicsContext = new_frame.board_panel.board_handling.graphics_context;
+
+        graphicsContext.color_intensity_table.set_value(ColorIntensityTable.ObjectNames.CONDUCTION_AREAS.ordinal(), 0.9);
+        graphicsContext.item_color_table.set_conduction_colors(new Color[]{
+            new Color(232, 204, 135),
+            new Color(255, 255, 255)
+        });
+        graphicsContext.other_color_table.set_background_color(new Color(1, 58, 32));
+        graphicsContext.other_color_table.set_outline_color(new Color(255, 255, 255));
+
+        new_frame.board_panel.setBackground(graphicsContext.other_color_table.get_background_color());
+      }
+
+      FRAnalytics.buttonClicked("fileio_loaddsn", routingJob.getInputFileDetails());
+
+      if (!globalSettings.featureFlags.selectMode)
+      {
+        new_frame.board_panel.board_handling.set_route_menu_state();
+      }
+
+      if (routingJob.input.format.equals(FileFormat.DSN))
+      {
+        // Read the file with the saved rules, if it exists.
+        String design_name = routingJob.name;
+
+        String rules_file_name;
+        String parent_folder_name;
+        String confirm_import_rules_message;
+        if (globalSettings.design_rules_filename == null)
+        {
+          rules_file_name = design_name + ".rules";
+          parent_folder_name = routingJob.input.getDirectoryPath();
+          confirm_import_rules_message = tm.getText("confirm_import_rules");
+        }
+        else
+        {
+          rules_file_name = globalSettings.design_rules_filename;
+          parent_folder_name = null;
+          confirm_import_rules_message = null;
+        }
+
+        File rules_file = new File(parent_folder_name, rules_file_name);
+        if (rules_file.exists())
+        {
+          // load the .rules file
+          RoutingJob.read_rules_file(design_name, parent_folder_name, rules_file_name, new_frame.board_panel.board_handling, confirm_import_rules_message);
+        }
+
+        // ignore net classes if they were defined by a command line argument
+        for (String net_class_name : globalSettings.routerSettings.ignoreNetClasses)
+        {
+          NetClasses netClasses = new_frame.board_panel.board_handling.get_routing_board().rules.net_classes;
+
+          for (int i = 0; i < netClasses.count(); i++)
+          {
+            if (netClasses
+                .get(i)
+                .get_name()
+                .equalsIgnoreCase(net_class_name))
+            {
+              netClasses.get(i).is_ignored_by_autorouter = true;
+            }
+          }
+        }
+
+        new_frame.refresh_windows();
+      }
+      return new_frame;
+    } catch (Exception e)
+    {
+      FRLogger.error("Couldn't read the file", e);
+      return null;
+    } finally
+    {
+      if (input_stream != null)
+      {
+        try
+        {
+          input_stream.close();
+        } catch (IOException ignored)
+        {
+        }
+      }
     }
-    return new_frame;
   }
 
   public static void saveSettings() throws IOException

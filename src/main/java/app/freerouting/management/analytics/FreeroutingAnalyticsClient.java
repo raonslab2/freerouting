@@ -79,9 +79,19 @@ public class FreeroutingAnalyticsClient implements AnalyticsClient
         }
       } catch (Exception e)
       {
-        FRLogger.debug("Exception in FreeroutingAnalyticsClient.sendPayloadAsync: " + connection.getRequestMethod() + " " + connection
-            .getURL()
-            .toString() + " - " + e.getMessage(), null);
+        String requestInfo = endpoint;
+        if (connection != null)
+        {
+          requestInfo = connection.getRequestMethod() + " " + connection
+              .getURL();
+        }
+        FRLogger.debug("Skipping analytics send (" + requestInfo + "): " + e.getMessage(), null);
+      } finally
+      {
+        if (connection != null)
+        {
+          connection.disconnect();
+        }
       }
     }).start();
   }

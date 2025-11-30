@@ -33,8 +33,7 @@ The primary way to configure Freerouting is through a JSON settings file. This f
     "automatic_neckdown": true
   },
   "usage_and_diagnostic_data": {
-    "disable_analytics": false,
-    "analytics_modulo": 16
+    "disable_analytics": true
   },
   "feature_flags": {
     "logging": true,
@@ -77,6 +76,7 @@ The primary way to configure Freerouting is through a JSON settings file. This f
 - **`default_preferred_direction_trace_cost`**: Cost factor for routing traces in the preferred direction.
 - **`default_undesired_direction_trace_cost`**: Cost factor for routing traces in undesired directions.
 - **`max_passes`**: Maximum number of routing passes.
+- **`routing_mode`**: High-level preset for speed/quality trade-offs. `balanced` (default) keeps existing behavior, `fast` caps passes and skips the post-route optimizer, and `quality` enables the optimizer with deeper passes. Can also be set per run via `-rm/--routing-mode` or `FREEROUTING__ROUTING_MODE`.
 - **`fanout_max_passes`**: Maximum number of passes for fanout routing.
 - **`max_threads`**: Maximum number of threads to use for routing.
 - **`improvement_threshold`**: Minimum improvement required to continue routing.
@@ -89,8 +89,7 @@ The primary way to configure Freerouting is through a JSON settings file. This f
 
 #### **`usage_and_diagnostic_data` Section**
 
-- **`disable_analytics`**: Disables sending anonymous usage and diagnostic data.
-- **`analytics_modulo`**: Sends usage data after every Nth run, where N is the value of `analytics_modulo`.
+- **`disable_analytics`**: Disables sending anonymous usage and diagnostic data. This is `true` by default; analytics will only run when you explicitly opt in for the current process (e.g., `--enable-analytics` CLI flag or `FREEROUTING__ENABLE_ANALYTICS=1` environment variable). The settings file alone cannot enable analytics.
 
 #### **`feature_flags` Section**
 

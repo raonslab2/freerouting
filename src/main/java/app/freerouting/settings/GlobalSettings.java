@@ -187,6 +187,32 @@ public class GlobalSettings implements Serializable
    */
   public void applyEnvironmentVariables()
   {
+    var enableAnalyticsEnv = System.getenv("FREEROUTING__ENABLE_ANALYTICS");
+    if (enableAnalyticsEnv != null)
+    {
+      boolean optIn = !enableAnalyticsEnv
+          .trim()
+          .equalsIgnoreCase("false") && !enableAnalyticsEnv
+          .trim()
+          .equals("0");
+      usageAndDiagnosticData.runtimeOptIn = optIn;
+      if (optIn)
+      {
+        usageAndDiagnosticData.disableAnalytics = false;
+        userProfileSettings.isTelemetryAllowed = true;
+      }
+    }
+
+    var routingModeEnv = System.getenv("FREEROUTING__ROUTING_MODE");
+    if (routingModeEnv != null)
+    {
+      RoutingMode routingMode = RoutingMode.fromString(routingModeEnv);
+      if (routingMode != null)
+      {
+        routerSettings.setRoutingMode(routingMode);
+      }
+    }
+
     // Read all the environment variables that begins with "FREEROUTING__"
     for (var entry : System
         .getenv()
@@ -302,6 +328,34 @@ public class GlobalSettings implements Serializable
             {
               routerSettings.maxPasses = 99998;
             }
+          }
+        }
+        else if (p_args[i].startsWith("-rm"))
+        {
+          if (p_args.length > i + 1 && !p_args[i + 1].startsWith("-"))
+          {
+            RoutingMode routingMode = RoutingMode.fromString(p_args[i + 1]);
+            if (routingMode != null)
+            {
+              routerSettings.setRoutingMode(routingMode);
+            }
+          }
+        }
+        else if (p_args[i].startsWith("--routing-mode") || p_args[i].startsWith("--routing_mode"))
+        {
+          String modeValue = null;
+          if (p_args[i].contains("="))
+          {
+            modeValue = p_args[i].substring(p_args[i].indexOf('=') + 1);
+          }
+          else if (p_args.length > i + 1 && !p_args[i + 1].startsWith("-"))
+          {
+            modeValue = p_args[i + 1];
+          }
+          RoutingMode routingMode = RoutingMode.fromString(modeValue);
+          if (routingMode != null)
+          {
+            routerSettings.setRoutingMode(routingMode);
           }
         }
         else if (p_args[i].startsWith("-mt"))
@@ -449,6 +503,13 @@ public class GlobalSettings implements Serializable
         else if (p_args[i].startsWith("-da"))
         {
           usageAndDiagnosticData.disableAnalytics = true;
+          usageAndDiagnosticData.runtimeOptIn = false;
+        }
+        else if (p_args[i].equals("-ea") || p_args[i].equals("--enable-analytics") || p_args[i].equals("--enable_analytics"))
+        {
+          usageAndDiagnosticData.runtimeOptIn = true;
+          usageAndDiagnosticData.disableAnalytics = false;
+          userProfileSettings.isTelemetryAllowed = true;
         }
         else if (p_args[i].startsWith("-host"))
         {

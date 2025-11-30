@@ -1,6 +1,8 @@
 package app.freerouting.settings;
 
 import app.freerouting.autoroute.AutorouteControl;
+import app.freerouting.autoroute.BoardUpdateStrategy;
+import app.freerouting.autoroute.ItemSelectionStrategy;
 import app.freerouting.board.RoutingBoard;
 import app.freerouting.logger.FRLogger;
 import app.freerouting.management.ReflectionUtil;
@@ -15,6 +17,8 @@ public class RouterSettings implements Serializable
   public transient boolean enabled = true;
   @SerializedName("algorithm")
   public String algorithm = "freerouting-router";
+  @SerializedName("routing_mode")
+  public RoutingMode routingMode = RoutingMode.BALANCED;
   @SerializedName("job_timeout")
   public String jobTimeoutString = "12:00:00";
   @SerializedName("max_passes")
@@ -147,6 +151,7 @@ public class RouterSettings implements Serializable
   {
     RouterSettings result = new RouterSettings(this.isLayerActive.length);
     result.algorithm = this.algorithm;
+    result.routingMode = this.routingMode;
     result.jobTimeoutString = this.jobTimeoutString;
     result.isLayerActive = this.isLayerActive.clone();
     result.isPreferredDirectionHorizontalOnLayer = this.isPreferredDirectionHorizontalOnLayer.clone();
@@ -421,6 +426,46 @@ public class RouterSettings implements Serializable
   public void set_automatic_neckdown(boolean p_value)
   {
     this.automatic_neckdown = p_value;
+  }
+
+  /**
+   * Applies preset values for speed/quality trade-offs.
+   */
+  public void applyRoutingModeDefaults()
+  {
+    if (routingMode == null)
+    {
+      routingMode = RoutingMode.BALANCED;
+    }
+
+    switch (routingMode)
+    {
+      case FAST:
+        maxPasses = Math.min(maxPasses, 500);
+        optimizer.enabled = false;
+        optimizer.maxPasses = Math.min(optimizer.maxPasses, 150);
+        optimizer.optimizationImprovementThreshold = Math.max(optimizer.optimizationImprovementThreshold, 0.05f);
+        break;
+      case QUALITY:
+        maxPasses = Math.max(maxPasses, 4000);
+        optimizer.enabled = true;
+        optimizer.maxPasses = Math.max(optimizer.maxPasses, 600);
+        optimizer.optimizationImprovementThreshold = Math.min(optimizer.optimizationImprovementThreshold, 0.005f);
+        optimizer.boardUpdateStrategy = BoardUpdateStrategy.HYBRID;
+        optimizer.itemSelectionStrategy = ItemSelectionStrategy.PRIORITIZED;
+        optimizer.hybridRatio = "3:1";
+        break;
+      case BALANCED:
+      default:
+        // leave manual/custom settings untouched
+        break;
+    }
+  }
+
+  public void setRoutingMode(RoutingMode routingMode)
+  {
+    this.routingMode = routingMode;
+    applyRoutingModeDefaults();
   }
 
   /**

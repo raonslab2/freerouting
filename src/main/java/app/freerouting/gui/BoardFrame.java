@@ -74,6 +74,10 @@ public class BoardFrame extends WindowBase
   private final List<Consumer<RoutingBoard>> boardSavedEventListeners = new ArrayList<>();
   private final BoardObservers board_observers;
   private final String freerouting_version;
+  private final JPanel sidePanel;
+  private final JPanel sidePanelContent;
+  private final JTabbedPane sideTabs;
+  private NetInspectorPanel netInspectorPanel;
   /**
    * The panel with the graphical representation of the board.
    */
@@ -278,7 +282,6 @@ public class BoardFrame extends WindowBase
     this.routing_dashboard_panel = new RoutingDashboardPanel(this.locale);
     this.message_panel = new BoardPanelStatus(this.locale);
     JPanel bottomPanel = new JPanel(new BorderLayout());
-    bottomPanel.add(this.routing_dashboard_panel, BorderLayout.NORTH);
     bottomPanel.add(this.message_panel, BorderLayout.SOUTH);
     this.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -328,10 +331,41 @@ public class BoardFrame extends WindowBase
     this.scroll_pane = new JScrollPane();
     this.scroll_pane.setPreferredSize(new Dimension(1150, 800));
     this.scroll_pane.setVerifyInputWhenFocusTarget(false);
-    this.add(scroll_pane, BorderLayout.CENTER);
+
+    // Simple placeholder side panel on the right for future widgets.
+    this.sidePanel = new JPanel();
+    this.sidePanel.setPreferredSize(new Dimension(260, 800));
+    this.sidePanel.setLayout(new BorderLayout(0, 8));
+
+    this.sidePanelContent = new JPanel(new BorderLayout());
+    this.sidePanelContent.setOpaque(false);
+    this.sidePanelContent.add(new JLabel("Logs / Info"), BorderLayout.NORTH);
+
+    this.sideTabs = new JTabbedPane();
+    this.sideTabs.addTab("Routing", this.routing_dashboard_panel);
+    this.sideTabs.addTab("Info", this.sidePanelContent);
+    this.sidePanel.add(this.sideTabs, BorderLayout.CENTER);
+
+    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this.scroll_pane, this.sidePanel);
+    splitPane.setResizeWeight(1.0); // Keep board area dominant.
+    splitPane.setOneTouchExpandable(true);
+    this.add(splitPane, BorderLayout.CENTER);
 
     this.board_panel = new BoardPanel(screen_messages, this, globalSettings, routingJob);
     this.scroll_pane.setViewportView(board_panel);
+
+    this.netInspectorPanel = new NetInspectorPanel(this.board_panel.board_handling);
+    this.sideTabs.addTab("Nets", this.netInspectorPanel);
+
+    // Clicking errors/warnings/DRC counts jumps to the Net tab with unrouted filter.
+    this.message_panel.addErrorOrWarningLabelClickedListener(() ->
+    {
+      if (this.netInspectorPanel != null)
+      {
+        this.netInspectorPanel.showUnroutedOnly();
+        this.sideTabs.setSelectedComponent(this.netInspectorPanel);
+      }
+    });
 
     this.addWindowListener(new WindowStateListener());
 

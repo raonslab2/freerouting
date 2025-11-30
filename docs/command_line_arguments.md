@@ -44,6 +44,9 @@ Below is a comprehensive list of command-line options available in Freerouting, 
 - **`-mp [number of passes]`**  
   Sets the upper limit for the number of autorouter passes to perform. More passes may result in better optimization but will take longer.
 
+- **`-rm [fast | balanced | quality]`**  
+  Chooses a routing preset: `fast` caps passes and skips post-route optimization, `quality` enables a deeper optimizer run, and `balanced` keeps the default behavior. Can also be set via `FREEROUTING__ROUTING_MODE`.
+
 - **`-mt [number of threads]`**  
   Sets the thread pool size for route optimization:
   - Default: One less than the number of logical processors on the system.
@@ -111,6 +114,9 @@ Below is a comprehensive list of command-line options available in Freerouting, 
   Sets the dialog confirmation timeout:
   - Specifies the number of seconds before dialogs proceed with the default action.
   - Default is `20` seconds.
+
+- **`-ea`**  
+  Explicitly opts in to sending anonymous analytics for the current run. Analytics are disabled by default.
 
 - **`-da`**  
   Disables the collection of anonymous analytics data.

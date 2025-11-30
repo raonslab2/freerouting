@@ -18,6 +18,8 @@ public class RoutingDashboardPanel extends JPanel
   private final JProgressBar passProgressBar;
   private final JProgressBar workProgressBar;
   private final JLabel stageLabel;
+  private final JLabel stateLabel;
+  private final JLabel remainingLabel;
   private final JLabel timerLabel;
   private final JLabel statsLabel;
   private final NumberFormat integerFormat;
@@ -34,6 +36,11 @@ public class RoutingDashboardPanel extends JPanel
     this.integerFormat.setMaximumFractionDigits(0);
 
     stageLabel = new JLabel("Routing");
+    stateLabel = new JLabel("Idle");
+    stateLabel.setOpaque(true);
+    stateLabel.setBackground(new Color(230, 230, 230));
+    stateLabel.setBorder(new EmptyBorder(2, 6, 2, 6));
+    remainingLabel = new JLabel("Unrouted: 0");
     timerLabel = new JLabel("00:00 elapsed", SwingConstants.RIGHT);
 
     passProgressBar = new JProgressBar(0, 100);
@@ -46,7 +53,12 @@ public class RoutingDashboardPanel extends JPanel
 
     JPanel header = new JPanel(new BorderLayout());
     header.setOpaque(false);
-    header.add(stageLabel, BorderLayout.WEST);
+    JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+    leftHeader.setOpaque(false);
+    leftHeader.add(stateLabel);
+    leftHeader.add(stageLabel);
+    header.add(leftHeader, BorderLayout.WEST);
+    header.add(remainingLabel, BorderLayout.CENTER);
     header.add(timerLabel, BorderLayout.EAST);
 
     JPanel bars = new JPanel(new GridLayout(2, 1, 6, 4));
@@ -72,10 +84,12 @@ public class RoutingDashboardPanel extends JPanel
       startedAt = null;
       configuredMaxPasses = 1;
       stageLabel.setText("Waiting to route");
+      setState("Idle", new Color(230, 230, 230));
       passProgressBar.setValue(0);
       passProgressBar.setString("Pass 0 / 0");
       workProgressBar.setValue(0);
       workProgressBar.setString("Current pass 0%");
+      remainingLabel.setText("Unrouted: 0");
       statsLabel.setText("Queued 0 • Routed 0 • Ripped 0 • Failed 0 • Incomplete 0");
       timerLabel.setText("00:00 elapsed");
     });
@@ -88,6 +102,7 @@ public class RoutingDashboardPanel extends JPanel
       startedAt = Instant.now();
       configuredMaxPasses = Math.max(1, maxPasses);
       stageLabel.setText(stageText);
+      setState("Routing", new Color(198, 228, 255));
       passProgressBar.setValue(0);
       passProgressBar.setString("Pass 1 / " + configuredMaxPasses);
       workProgressBar.setValue(0);
@@ -130,6 +145,7 @@ public class RoutingDashboardPanel extends JPanel
         int failed = safe(counters.failedToBeRoutedCount);
         int queued = safe(counters.queuedToBeRoutedCount);
         int incomplete = safe(counters.incompleteCount);
+        remainingLabel.setText("Unrouted: " + integerFormat.format(incomplete));
 
         int completedThisPass = routed + ripped + skipped + failed;
         int totalThisPass = queued + completedThisPass;
@@ -153,6 +169,7 @@ public class RoutingDashboardPanel extends JPanel
       passProgressBar.setString(summary);
       workProgressBar.setValue(100);
       workProgressBar.setString(cancelled ? "Stopped" : "Completed");
+      setState(cancelled ? "Stopped" : "Completed", cancelled ? new Color(255, 224, 224) : new Color(210, 248, 210));
       updateTimer();
     });
   }
@@ -201,5 +218,11 @@ public class RoutingDashboardPanel extends JPanel
     {
       SwingUtilities.invokeLater(runnable);
     }
+  }
+
+  private void setState(String text, Color background)
+  {
+    stateLabel.setText(text);
+    stateLabel.setBackground(background);
   }
 }

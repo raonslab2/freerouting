@@ -12,7 +12,7 @@ public class UserProfileSettings implements Serializable
   @SerializedName("email")
   public String userEmail = "";
   @SerializedName("allow_telemetry")
-  public Boolean isTelemetryAllowed = true;
+  public Boolean isTelemetryAllowed = false;
   @SerializedName("allow_contact")
   public Boolean isContactAllowed = true;
 
