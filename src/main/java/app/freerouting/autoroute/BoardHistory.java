@@ -21,6 +21,7 @@ public class BoardHistory
   private final List<BoardHistoryEntry> boards = Collections.synchronizedList(new ArrayList<>());
   private final RouterScoringSettings scoringSettings;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+  private boolean needsSort = true;  // Performance: cache sort state
 
   public BoardHistory(RouterScoringSettings scoringSettings)
   {
@@ -35,6 +36,7 @@ public class BoardHistory
     }
 
     boards.add(new BoardHistoryEntry(board, scoringSettings));
+    needsSort = true;  // Mark that sorting is needed
   }
 
   public synchronized void clear()
@@ -120,8 +122,11 @@ public class BoardHistory
 
     try
     {
-      // Sort the boards by score
-      boards.sort((o1, o2) -> Float.compare(o2.score, o1.score));
+      // Sort the boards by score (only if needed)
+      if (needsSort) {
+        boards.sort((o1, o2) -> Float.compare(o2.score, o1.score));
+        needsSort = false;
+      }
 
       for (BoardHistoryEntry entry : boards)
       {

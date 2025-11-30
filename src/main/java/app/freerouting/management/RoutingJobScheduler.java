@@ -45,9 +45,7 @@ public class RoutingJobScheduler
         try
         {
           // loop through jobs with the READY_TO_START state, order them according to their priority and start them up to the maximum number of parallel jobs
-          while (jobs
-              .stream()
-              .count() > 0)
+          while (!jobs.isEmpty())
           {
             RoutingJob[] jobsArray;
             synchronized (jobs)
@@ -63,10 +61,12 @@ public class RoutingJobScheduler
             {
               if (job.state == RoutingJobState.READY_TO_START)
               {
-                int parallelJobs = (int) jobs
-                    .stream()
-                    .filter(j -> j.state == RoutingJobState.RUNNING)
-                    .count();
+                int parallelJobs = 0;
+                synchronized (jobs) {
+                    for (RoutingJob j : jobs) {
+                        if (j.state == RoutingJobState.RUNNING) parallelJobs++;
+                    }
+                }
 
                 if (parallelJobs < maxParallelJobs)
                 {

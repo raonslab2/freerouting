@@ -115,7 +115,7 @@ public class BatchAutorouter extends NamedAlgorithm
   private static LinkedList<Item> getAutorouteItems(RoutingBoard board)
   {
     LinkedList<Item> autoroute_item_list = new LinkedList<>();
-    Set<Item> handled_items = new TreeSet<>();
+    Set<Item> handled_items = new HashSet<>();
     Iterator<UndoableObjects.UndoableObjectNode> it = board.item_list.start_read_object();
     for (; ; )
     {
