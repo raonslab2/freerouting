@@ -997,6 +997,11 @@ public class Network extends ScopeKeyword
   private static void insert_component(ComponentPlacement.ComponentLocation p_location, String p_lib_key, ReadScopeParameter p_par)
   {
     RoutingBoard routing_board = p_par.board_handling.get_routing_board();
+    if (routing_board == null || routing_board.library == null || routing_board.library.packages == null)
+    {
+      FRLogger.warn("Network.insert_component: routing board or library is null");
+      return;
+    }
     app.freerouting.core.Package curr_front_package = routing_board.library.packages.get(p_lib_key, true);
     app.freerouting.core.Package curr_back_package = routing_board.library.packages.get(p_lib_key, false);
     if (curr_front_package == null || curr_back_package == null)

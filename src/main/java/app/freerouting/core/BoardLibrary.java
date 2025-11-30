@@ -141,6 +141,10 @@ public class BoardLibrary implements Serializable
    */
   public boolean remove_via_padstack(Padstack p_padstack, BasicBoard p_board)
   {
+    if (via_padstacks == null)
+    {
+      return false;
+    }
     return via_padstacks.remove(p_padstack);
   }
 
@@ -150,6 +154,10 @@ public class BoardLibrary implements Serializable
    */
   public Padstack get_mirrored_via_padstack(Padstack p_via_padstack)
   {
+    if (this.padstacks == null || this.padstacks.board_layer_structure == null)
+    {
+      return null;
+    }
     int layer_count = this.padstacks.board_layer_structure.arr.length;
     if (p_via_padstack.from_layer() == 0 && p_via_padstack.to_layer() == layer_count - 1)
     {
@@ -157,6 +165,10 @@ public class BoardLibrary implements Serializable
     }
     int new_from_layer = layer_count - p_via_padstack.to_layer() - 1;
     int new_to_layer = layer_count - p_via_padstack.from_layer() - 1;
+    if (via_padstacks == null)
+    {
+      return null;
+    }
     for (Padstack curr_via_padstack : via_padstacks)
     {
       if (curr_via_padstack.from_layer() == new_from_layer && curr_via_padstack.to_layer() == new_to_layer)
@@ -188,14 +200,17 @@ public class BoardLibrary implements Serializable
         }
       }
     }
-    for (int i = 1; i <= this.packages.count(); ++i)
+    if (this.packages != null)
     {
-      Package curr_package = this.packages.get(i);
-      for (int j = 0; j < curr_package.pin_count(); ++j)
+      for (int i = 1; i <= this.packages.count(); ++i)
       {
-        if (curr_package.get_pin(j).padstack_no == p_padstack.no)
+        Package curr_package = this.packages.get(i);
+        for (int j = 0; j < curr_package.pin_count(); ++j)
         {
-          return true;
+          if (curr_package.get_pin(j).padstack_no == p_padstack.no)
+          {
+            return true;
+          }
         }
       }
     }

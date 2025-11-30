@@ -77,7 +77,15 @@ public class DsnFile
       if (read_scope_par.autoroute_settings == null)
       {
         // look for power planes with incorrect layer type and adjust autoroute parameters
-        adjust_plane_autoroute_settings(boardManager);
+        try
+        {
+          adjust_plane_autoroute_settings(boardManager);
+        }
+        catch (Exception e)
+        {
+          FRLogger.warn("DsnFile.read: error adjusting plane autoroute settings: " + e.getMessage());
+          // Continue anyway - this is not a critical error
+        }
       }
     }
     else if (!read_scope_par.board_outline_ok)
@@ -98,15 +106,23 @@ public class DsnFile
    */
   private static boolean adjust_plane_autoroute_settings(BoardManager p_board_handling)
   {
+    if (p_board_handling == null)
+    {
+      return false;
+    }
     BasicBoard routing_board = p_board_handling.get_routing_board();
+    if (routing_board == null)
+    {
+      return false;
+    }
     app.freerouting.board.LayerStructure board_layer_structure = routing_board.layer_structure;
-    if (board_layer_structure.arr.length <= 2)
+    if (board_layer_structure == null || board_layer_structure.arr == null || board_layer_structure.arr.length <= 2)
     {
       return false;
     }
     for (app.freerouting.board.Layer curr_layer : board_layer_structure.arr)
     {
-      if (!curr_layer.is_signal)
+      if (curr_layer == null || !curr_layer.is_signal)
       {
         return false;
       }
@@ -120,6 +136,10 @@ public class DsnFile
     }
     Collection<ConductionArea> conduction_area_list = new LinkedList<>();
     Collection<Item> item_list = routing_board.get_items();
+    if (item_list == null)
+    {
+      return false;
+    }
     for (Item curr_item : item_list)
     {
       if (curr_item instanceof Trace)
@@ -135,6 +155,10 @@ public class DsnFile
     boolean nothing_changed = true;
 
     BoardOutline board_outline = routing_board.get_outline();
+    if (board_outline == null)
+    {
+      return false;
+    }
     double board_area = 0;
     for (int i = 0; i < board_outline.shape_count(); ++i)
     {
@@ -161,9 +185,16 @@ public class DsnFile
       {
         continue;
       }
-      TileShape[] convex_pieces = curr_conduction_area
-          .get_area()
-          .split_to_convex();
+      app.freerouting.geometry.planar.Area conduction_area = curr_conduction_area.get_area();
+      if (conduction_area == null)
+      {
+        continue;
+      }
+      TileShape[] convex_pieces = conduction_area.split_to_convex();
+      if (convex_pieces == null)
+      {
+        continue;
+      }
       double curr_area = 0;
       for (TileShape curr_piece : convex_pieces)
       {
@@ -196,7 +227,15 @@ public class DsnFile
     }
     // Adjust the layer preferred directions in the autoroute settings.
     // and deactivate the changed layers.
+    if (p_board_handling.get_settings() == null)
+    {
+      return true;
+    }
     RouterSettings autoroute_settings = p_board_handling.get_settings().autoroute_settings;
+    if (autoroute_settings == null)
+    {
+      return true;
+    }
     int layer_count = routing_board.get_layer_count();
     boolean curr_preferred_direction_is_horizontal = autoroute_settings.get_preferred_direction_is_horizontal(0);
     for (int i = 0; i < layer_count; ++i)

@@ -24,8 +24,19 @@ public class SpecctraSesFileWriter
    */
   public static boolean write(BasicBoard p_board, OutputStream p_output_stream, String p_design_name)
   {
-    if (p_output_stream == null)
+    if (p_board == null || p_output_stream == null)
     {
+      FRLogger.warn("SpecctraSesFileWriter.write: board or output stream is null");
+      return false;
+    }
+    if (p_board.library == null)
+    {
+      FRLogger.warn("SpecctraSesFileWriter.write: board library is null");
+      return false;
+    }
+    if (p_board.communication == null)
+    {
+      FRLogger.warn("SpecctraSesFileWriter.write: board communication is null");
       return false;
     }
     IndentFileWriter output_file;
@@ -82,7 +93,7 @@ public class SpecctraSesFileWriter
     p_file.write("placement");
     Resolution.write_scope(p_file, p_board.communication);
 
-    if (p_board.library.packages != null)
+    if (p_board.library != null && p_board.library.packages != null)
     {
       for (int i = 1; i <= p_board.library.packages.count(); ++i)
       {

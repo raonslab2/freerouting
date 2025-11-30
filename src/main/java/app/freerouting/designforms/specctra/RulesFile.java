@@ -170,12 +170,15 @@ public class RulesFile
     // write the default rule using 0 as default layer.
     Rule.write_default_rule(p_par, 0);
     // write the via padstacks
-    for (int i = 1; i <= p_par.board.library.padstacks.count(); ++i)
+    if (p_par.board.library != null && p_par.board.library.padstacks != null)
     {
+      for (int i = 1; i <= p_par.board.library.padstacks.count(); ++i)
+      {
       Padstack curr_padstack = p_par.board.library.padstacks.get(i);
       if (p_par.board.library.get_via_padstack(curr_padstack.name) != null)
       {
         Library.write_padstack_scope(p_par, curr_padstack);
+      }
       }
     }
     Network.write_via_infos(p_par.board.rules, p_par.file, p_par.identifier_type);
