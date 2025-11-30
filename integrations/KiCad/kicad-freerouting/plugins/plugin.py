@@ -301,9 +301,8 @@ class FreeroutingPlugin(pcbnew.ActionPlugin):
             return False
     
         dialog = ProcessDialog(None, textwrap.dedent("""
-        Complete or Terminate Freerouting:
-        * to complete, close Java window
-        * to terminate, press Terminate here
+        Close Freerouting window when done,
+        or click Terminate to cancel.
         """))
 
         def on_complete():
