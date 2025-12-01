@@ -19,6 +19,7 @@ public class ScreenMessages
   private static final String empty_string = "            ";
   final JLabel errorLabel;
   final JLabel warningLabel;
+  final JLabel drcLabel;
   private final String active_layer_string;
   private final String target_layer_string;
   /**
@@ -38,7 +39,7 @@ public class ScreenMessages
   /**
    * Creates a new instance of ScreenMessages
    */
-  public ScreenMessages(JLabel errorLabel, JLabel warningLabel, JLabel p_status_field, JLabel p_add_field, JLabel p_layer_field, JLabel p_score_field, JLabel p_mouse_position, JLabel p_unit_label, Locale p_locale)
+  public ScreenMessages(JLabel errorLabel, JLabel warningLabel, JLabel p_status_field, JLabel p_add_field, JLabel p_layer_field, JLabel p_score_field, JLabel p_mouse_position, JLabel p_unit_label, JLabel p_drc_label, Locale p_locale)
   {
 
     tm = new TextManager(this.getClass(), p_locale);
@@ -46,6 +47,7 @@ public class ScreenMessages
     target_layer_string = tm.getText("target_layer") + " ";
     this.errorLabel = errorLabel;
     this.warningLabel = warningLabel;
+    this.drcLabel = p_drc_label;
     status_field = p_status_field;
     add_field = p_add_field;
     layer_field = p_layer_field;
@@ -63,6 +65,10 @@ public class ScreenMessages
   {
     errorLabel.setText(Integer.toString(errorsCount));
     warningLabel.setText(Integer.toString(warningCount));
+    if (drcLabel != null)
+    {
+      drcLabel.setText("DRC: " + errorsCount);
+    }
   }
 
   /**
