@@ -58,7 +58,7 @@ public class RoutingJobSchedulerActionThread extends StoppableThread {
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e) {
-          e.printStackTrace();
+          FRLogger.warn("Job monitor thread interrupted: " + e.getMessage());
         }
 
         if (job.state == RoutingJobState.RUNNING || job.state == RoutingJobState.STOPPING) {
@@ -79,7 +79,7 @@ public class RoutingJobSchedulerActionThread extends StoppableThread {
               try {
                 Thread.sleep(1000);
               } catch (InterruptedException e) {
-                e.printStackTrace();
+                FRLogger.warn("Job timeout wait interrupted: " + e.getMessage());
               }
             }
             job.state = RoutingJobState.TIMED_OUT;
@@ -246,6 +246,16 @@ public class RoutingJobSchedulerActionThread extends StoppableThread {
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
         if (boardManager.saveAsSpecctraSessionSes(baos, job.name)) {
           job.output.setData(baos.toByteArray());
+          // Write intermediate SES to output file for real-time visualization
+          String outPath = job.output.getAbsolutePath();
+          if (outPath != null && !outPath.isEmpty()) {
+              try {
+                java.nio.file.Files.write(java.nio.file.Path.of(outPath), baos.toByteArray());
+                FRLogger.debug("Intermediate SES written to: " + outPath);
+              } catch (Exception e) {
+                FRLogger.warn("Failed to write intermediate SES to '" + outPath + "': " + e.getMessage());
+              }
+          }
         }
       } catch (Exception e) {
         FRLogger.error("Couldn't save the output into the job object.", e);

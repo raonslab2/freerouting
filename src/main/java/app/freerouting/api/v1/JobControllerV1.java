@@ -537,11 +537,11 @@ public class JobControllerV1 extends BaseController {
           .build();
     }
 
-    // Check if the job is completed
-    if (job.state != RoutingJobState.COMPLETED) {
+    // Check if output data is available (allow download during RUNNING for partial results)
+    if (job.output == null || job.output.getData() == null) {
       return Response
           .status(Response.Status.BAD_REQUEST)
-          .entity("{\"error\":\"The job hasn't finished yet.\"}")
+          .entity("{\"error\":\"The job output is not available yet.\"}")
           .build();
     }
 

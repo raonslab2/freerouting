@@ -50,6 +50,10 @@ public class BatchAutorouter extends NamedAlgorithm {
   // The modulo of the pass number to check if the improvements were so small that
   // process should stop despite not all items are routed
   private static final int STOP_AT_PASS_MODULO = 4;
+  // Number of consecutive passes without score improvement before stopping
+  private static final int STALL_THRESHOLD = 50;
+  // Minimum score improvement to consider progress was made
+  private static final float SCORE_IMPROVEMENT_EPSILON = 0.001f;
 
   private final boolean remove_unconnected_vias;
   private final AutorouteControl.ExpansionCostFactor[] trace_cost_arr;
@@ -465,7 +469,7 @@ public class BatchAutorouter extends NamedAlgorithm {
             routerCounters.rippedCount = ripped_item_count;
             routerCounters.failedToBeRoutedCount = not_routed;
             routerCounters.routedCount = routed;
-            routerCounters.incompleteCount = new RatsNest(board).incomplete_count();
+            routerCounters.incompleteCount = ratsNest.incomplete_count();
             this.fireBoardUpdatedEvent(boardStatistics, routerCounters, this.board);
           }
         }
@@ -556,6 +560,8 @@ public class BatchAutorouter extends NamedAlgorithm {
 
     boolean continueAutorouting = true;
     BoardHistory bh = new BoardHistory(job.routerSettings.scoring);
+    int stallCounter = 0;
+    float previousBestScore = -Float.MAX_VALUE;
 
     // Record configuration for profiler
     if (this.settings.isLayerActive != null) {
@@ -602,6 +608,19 @@ public class BatchAutorouter extends NamedAlgorithm {
 
       BoardStatistics boardStatisticsAfter = new BoardStatistics(this.board);
       float boardScoreAfter = boardStatisticsAfter.getNormalizedScore(job.routerSettings.scoring);
+
+      // Stall detection: stop if no improvement for STALL_THRESHOLD consecutive passes
+      if (boardScoreAfter <= previousBestScore + SCORE_IMPROVEMENT_EPSILON) {
+        stallCounter++;
+        if (stallCounter >= STALL_THRESHOLD) {
+          job.logInfo("Stall detected: no improvement for " + stallCounter + " passes, stopping auto-router.");
+          thread.request_stop_auto_router();
+          break;
+        }
+      } else {
+        stallCounter = 0;
+        previousBestScore = boardScoreAfter;
+      }
 
       if ((bh.size() >= STOP_AT_PASS_MINIMUM) || (this.thread.is_stop_auto_router_requested())) {
         if (((currentPass % STOP_AT_PASS_MODULO == 0) && (currentPass >= STOP_AT_PASS_MINIMUM))

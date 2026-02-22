@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class RoutingFailureLog implements Serializable {
 
     /** Failure threshold - give up after this many failures for the same item */
-    public static final int FAILURE_THRESHOLD = 50;
+    public static final int FAILURE_THRESHOLD = 15;
 
     /** Map of item ID to failure information */
     private final ConcurrentHashMap<Integer, ItemFailureInfo> failures;
