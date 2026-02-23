@@ -95,7 +95,7 @@ dependencies {
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
     implementation 'jakarta.validation:jakarta.validation-api:3.1.1'
     implementation 'jakarta.activation:jakarta.activation-api:2.1.4'
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.4'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.5'
 
     // Add Jersey dependencies
     implementation 'org.glassfish.jersey.core:jersey-common:4.0.0'
